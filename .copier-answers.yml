@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2024.04.23
+_src_path: gh:scientific-python/cookie
+backend: hatch
+email: nstarman@users.noreply.github.com
+full_name: Galactic Dynamics Maintainers
+license: MIT
+org: GalacticDynamics
+project_name: immutable_map_jax
+project_short_description: Immutable Map, compatible with JAX & Equinox
+url: https://github.com/GalacticDynamics/immutable_map_jax
+vcs: true
