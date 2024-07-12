@@ -7,9 +7,10 @@ immutable_map_jax: Immutable Map, compatible with JAX & Equinox
 __all__: list[str] = []
 
 from collections.abc import ItemsView, Iterable, Iterator, KeysView, Mapping, ValuesView
-from typing import Any, TypeVar, overload
+from typing import Annotated, Any, TypeVar, overload
 
 from jax.tree_util import register_pytree_node_class
+from typing_extensions import Doc
 
 _T = TypeVar("_T")
 K = TypeVar("K")
@@ -108,33 +109,20 @@ class ImmutableMap(Mapping[K, V]):
     # ===========================================
     # JAX PyTree
 
-    def tree_flatten(self) -> tuple[tuple[V, ...], tuple[K, ...]]:
-        """Flatten dict to the values (and keys).
-
-        Returns
-        -------
-        tuple[V, ...] tuple[str, ...]
-            A pair of an iterable with the values to be flattened recursively,
-            and the keys to pass back to the unflattening recipe.
-        """
-        return (tuple(self._data.values()), tuple(self._data.keys()))
+    def tree_flatten(
+        self,
+    ) -> tuple[
+        Annotated[tuple[V, ...], Doc("The values.")],
+        Annotated[tuple[K, ...], Doc("The keys as auxiliary data.")],
+    ]:
+        """Flatten dict to the values (and keys)."""
+        return tuple(self._data.values()), tuple(self._data.keys())
 
     @classmethod
     def tree_unflatten(
         cls,
-        aux_data: tuple[K, ...],
-        children: tuple[V, ...],
-    ) -> "ImmutableMap":  # type: ignore[type-arg] # TODO: upstream beartype fix for ImmutableMap[V]
-        """Unflatten.
-
-        Params:
-        aux_data: the opaque data that was specified during flattening of the
-            current treedef.
-        children: the unflattened children
-
-        Returns
-        -------
-        a re-constructed object of the registered type, using the specified
-        children and auxiliary data.
-        """
+        aux_data: Annotated[tuple[K, ...], Doc("The keys.")],
+        children: Annotated[tuple[V, ...], Doc("The values.")],
+    ) -> "ImmutableMap[K, V]":
+        """Unflatten into an ImmutableMap from the keys and values."""
         return cls(tuple(zip(aux_data, children, strict=True)))
