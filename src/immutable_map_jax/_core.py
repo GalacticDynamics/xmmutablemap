@@ -8,9 +8,9 @@ __all__: list[str] = []
 
 from collections.abc import ItemsView, Iterable, Iterator, KeysView, Mapping, ValuesView
 from typing import Annotated, Any, TypeVar, overload
+from typing_extensions import Doc
 
 from jax.tree_util import register_pytree_node_class
-from typing_extensions import Doc
 
 _T = TypeVar("_T")
 K = TypeVar("K")
