@@ -77,7 +77,7 @@ class ImmutableMap(Mapping[K, V]):
     @overload
     def get(self, key: K, /, default: V | _T) -> V | _T: ...
 
-    def get(self, key: K, /, default: V | _T | None = None) -> V | _T | None:  # type: ignore[misc]
+    def get(self, key: K, /, default: V | _T | None = None) -> V | _T | None:
         return self._data.get(key, default)
 
     # ===========================================
