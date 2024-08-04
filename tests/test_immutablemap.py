@@ -1,4 +1,4 @@
-"""Test :mod:`galax.utils._collections`."""
+"""Test :mod:`immutable_map_jax`."""
 
 from collections import OrderedDict
 from types import MappingProxyType
