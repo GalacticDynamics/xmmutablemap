@@ -1,4 +1,4 @@
-"""Test :mod:`immutable_map_jax`."""
+"""Test :mod:`xmmutablemap`."""
 
 from collections import OrderedDict
 from types import MappingProxyType
@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from immutable_map_jax import ImmutableMap
+from xmmutablemap import ImmutableMap
 
 
 class TestImmutableMap:

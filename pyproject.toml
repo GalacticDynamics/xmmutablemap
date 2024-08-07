@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 
 [project]
-name = "immutable_map_jax"
+name = "xmmutablemap"
 authors = [
   { name = "Galactic Dynamics Maintainers", email = "nstarman@users.noreply.github.com" },
 ]
@@ -44,24 +44,17 @@ dev = [
   "pytest >=6",
   "pytest-cov >=3",
 ]
-docs = [
-  "sphinx>=7.0",
-  "myst_parser>=0.13",
-  "sphinx_copybutton",
-  "sphinx_autodoc_typehints",
-  "furo>=2023.08.17",
-]
 
 [project.urls]
-Homepage = "https://github.com/GalacticDynamics/immutable_map_jax"
-"Bug Tracker" = "https://github.com/GalacticDynamics/immutable_map_jax/issues"
-Discussions = "https://github.com/GalacticDynamics/immutable_map_jax/discussions"
-Changelog = "https://github.com/GalacticDynamics/immutable_map_jax/releases"
+Homepage = "https://github.com/GalacticDynamics/xmmutablemap"
+"Bug Tracker" = "https://github.com/GalacticDynamics/xmmutablemap/issues"
+Discussions = "https://github.com/GalacticDynamics/xmmutablemap/discussions"
+Changelog = "https://github.com/GalacticDynamics/xmmutablemap/releases"
 
 
 [tool.hatch]
 version.source = "vcs"
-build.hooks.vcs.version-file = "src/immutable_map_jax/_version.py"
+build.hooks.vcs.version-file = "src/xmmutablemap/_version.py"
 
 [tool.hatch.envs.default]
 features = ["test"]
@@ -82,7 +75,7 @@ testpaths = [
 
 
 [tool.coverage]
-run.source = ["immutable_map_jax"]
+run.source = ["xmmutablemap"]
 report.exclude_also = [
   '\.\.\.',
   'if typing.TYPE_CHECKING:',
@@ -99,7 +92,7 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
-module = "immutable_map_jax.*"
+module = "xmmutablemap.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 

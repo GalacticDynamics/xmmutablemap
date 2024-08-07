@@ -6,7 +6,7 @@ email: nstarman@users.noreply.github.com
 full_name: Galactic Dynamics Maintainers
 license: MIT
 org: GalacticDynamics
-project_name: immutable_map_jax
+project_name: xmmutablemap
 project_short_description: Immutable Map, compatible with JAX & Equinox
-url: https://github.com/GalacticDynamics/immutable_map_jax
+url: https://github.com/GalacticDynamics/xmmutablemap
 vcs: true
