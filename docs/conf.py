@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import importlib.metadata
 
-project = "immutable_map_jax"
+project = "xmmutablemap"
 copyright = "2024, Galactic Dynamics Maintainers"
 author = "Galactic Dynamics Maintainers"
-version = release = importlib.metadata.version("immutable_map_jax")
+version = release = importlib.metadata.version("xmmutablemap")
 
 extensions = [
     "myst_parser",

@@ -71,7 +71,7 @@ pytest
 Use pytest-cov to generate coverage reports:
 
 ```bash
-pytest --cov=immutable_map_jax
+pytest --cov=xmmutablemap
 ```
 
 # Building docs

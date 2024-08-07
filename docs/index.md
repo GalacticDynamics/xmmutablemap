@@ -1,4 +1,4 @@
-# immutable_map_jax
+# xmmutablemap
 
 ```{toctree}
 :maxdepth: 2

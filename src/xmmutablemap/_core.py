@@ -1,7 +1,7 @@
 """
 Copyright (c) 2024 Galactic Dynamics Maintainers. All rights reserved.
 
-immutable_map_jax: Immutable Map, compatible with JAX & Equinox
+xmmutablemap: Immutable Map, compatible with JAX & Equinox
 """
 
 __all__: list[str] = []
