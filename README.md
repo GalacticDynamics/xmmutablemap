@@ -1,5 +1,5 @@
 <h1 align='center'> xmmutablemap </h1>
-<h2 align="center"><cod>Jax</code>-compatible Immutable Map</h2>
+<h3 align="center"><code>JAX</code>-compatible Immutable Mapping</h3>
 
 JAX prefers immutable objects but neither Python nor JAX provide an immutable
 dictionary. 😢 </br> This repository defines a light-weight immutable map
