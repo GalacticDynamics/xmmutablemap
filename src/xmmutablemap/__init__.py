@@ -1,5 +1,4 @@
-"""
-Copyright (c) 2024 Galactic Dynamics Maintainers. All rights reserved.
+"""Copyright (c) 2024 Galactic Dynamics Maintainers. All rights reserved.
 
 xmmutablemap: Immutable Map, compatible with JAX & Equinox
 """

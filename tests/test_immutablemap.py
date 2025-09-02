@@ -14,6 +14,7 @@ class TestImmutableMap:
 
     @pytest.fixture(scope="class")
     def d(self) -> ImmutableMap[str, Any]:
+        """Example immutable map."""
         return ImmutableMap(a=1, b=2)
 
     # ===============================================================
@@ -95,7 +96,7 @@ class TestImmutableMap:
         # Reverse order
         assert {"c": 3} | d == {"c": 3, "a": 1, "b": 2}
         assert OrderedDict([("c", 3)]) | d == OrderedDict(
-            [("c", 3), ("a", 1), ("b", 2)]
+            [("c", 3), ("a", 1), ("b", 2)],
         )
 
     # === Test pytree methods ===
