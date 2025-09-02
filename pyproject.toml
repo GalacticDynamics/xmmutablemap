@@ -56,10 +56,6 @@ Changelog = "https://github.com/GalacticDynamics/xmmutablemap/releases"
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/xmmutablemap/_version.py"
 
-[tool.hatch.envs.default]
-features = ["test"]
-scripts.test = "pytest {args}"
-
 
 [tool.pytest.ini_options]
 minversion = "6.0"
