@@ -10,15 +10,39 @@ dictionary. 😢 </br> This repository defines a light-weight immutable map
 [![PyPI platforms][pypi-platforms]][pypi-link]
 [![PyPI version][pypi-version]][pypi-link]
 
-<!-- [![Conda-Forge][conda-badge]][conda-link] -->
-
 ```bash
 pip install xmmutablemap
 ```
 
-## Documentation
+<details>
+  <summary>using <code>uv</code></summary>
 
-<!-- [![Documentation Status][rtd-badge]][rtd-link] -->
+```bash
+uv add xmmutablemap
+```
+
+</details>
+<details>
+  <summary>from source, using pip</summary>
+
+```bash
+pip install git+https://github.com/GalacticDynamics/xmmutablemap.git
+```
+
+</details>
+<details>
+  <summary>building from source</summary>
+
+```bash
+cd /path/to/parent
+git clone https://github.com/GalacticDynamics/xmmutablemap.git
+cd xmmutablemap
+pip install -e .  # editable mode
+```
+
+</details>
+
+## Documentation
 
 `xmutablemap` provides the class `ImmutableMap`, which is a full implementation
 of
@@ -46,14 +70,8 @@ We welcome contributions!
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/GalacticDynamics/xmmutablemap/workflows/CI/badge.svg
 [actions-link]:             https://github.com/GalacticDynamics/xmmutablemap/actions
-[conda-badge]:              https://img.shields.io/conda/vn/conda-forge/xmmutablemap
-[conda-link]:               https://github.com/conda-forge/xmmutablemap-feedstock
-<!-- [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
-[github-discussions-link]:  https://github.com/GalacticDynamics/xmmutablemap/discussions -->
 [pypi-link]:                https://pypi.org/project/xmmutablemap/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/xmmutablemap
 [pypi-version]:             https://img.shields.io/pypi/v/xmmutablemap
-[zenodo-badge]:             https://zenodo.org/badge/755708966.svg
-[zenodo-link]:              https://zenodo.org/doi/10.5281/zenodo.10850557
 
 <!-- prettier-ignore-end -->
