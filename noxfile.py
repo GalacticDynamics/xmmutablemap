@@ -40,8 +40,14 @@ def pylint(session: nox.Session) -> None:
     """Run PyLint."""
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.run("uv", "sync", "--group", "pylint")
-    session.run("uv", "run", "pylint", "xmmutablemap", *session.posargs)
+    if shutil.which("uv"):
+        session.run("uv", "sync", "--group", "pylint")
+        session.run("uv", "run", "pylint", "xmmutablemap", *session.posargs)
+    else:
+        # Fallback to regular pip if uv is not available
+        session.install("pylint>=3.3.8")
+        session.install("-e", ".")
+        session.run("pylint", "xmmutablemap", *session.posargs)
 
 
 # =============================================================================
