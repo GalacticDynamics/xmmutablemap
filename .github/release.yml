@@ -1,12 +1,4 @@
 changelog:
-  exclude:
-    authors:
-      - dependabot
-      - dependabot[bot]
-    categories:
-      - title: Dependencies
-        labels:
-          - dependencies
   categories:
     - title: ✨ Features
       labels:
@@ -24,6 +16,10 @@ changelog:
       labels:
         - maintenance
         - chore
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+        - github-actions
     - title: Other Changes
       labels:
         - "*"
