@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1204,7 +1205,7 @@ wheels = [
 
 [[package]]
 name = "pytest"
-version = "8.4.1"
+version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -1215,9 +1216,9 @@ dependencies = [
     { name = "pygments" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/ba/45911d754e8eba3d5a841a5ce61a65a685ff1798421ac054f85aa8747dfb/pytest-8.4.1.tar.gz", hash = "sha256:7c67fd69174877359ed9371ec3af8a3d2b04741818c51e5e99cc1742251fa93c", size = 1517714 }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/5c/00a0e072241553e1a7496d638deababa67c5058571567b92a7eaa258397c/pytest-8.4.2.tar.gz", hash = "sha256:86c0d0b93306b961d58d62a4db4879f27fe25513d4b969df351abdddb3c30e01", size = 1519618 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/16/c8a903f4c4dffe7a12843191437d7cd8e32751d5de349d45d3fe69544e87/pytest-8.4.1-py3-none-any.whl", hash = "sha256:539c70ba6fcead8e78eebbf1115e8b589e7565830d7d006a8723f19ac8a0afb7", size = 365474 },
+    { url = "https://files.pythonhosted.org/packages/a8/a4/20da314d277121d6534b3a980b29035dcd51e6744bd79075a6ce8fa4eb8d/pytest-8.4.2-py3-none-any.whl", hash = "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79", size = 365750 },
 ]
 
 [[package]]
@@ -1570,6 +1571,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d0/e1/14e7b92ebebd8264a36555967e450035249f5a065f57a71d16a5ed7c36a9/sybil-9.2.0-py3-none-any.whl", hash = "sha256:c0c82823a86c2a9e202fb628526aa973700cc20dbfd5c91481c265521e40b742", size = 38521 },
 ]
 
+[package.optional-dependencies]
+pytest = [
+    { name = "pytest" },
+]
+
 [[package]]
 name = "termcolor"
 version = "3.1.0"
@@ -1703,22 +1709,24 @@ dev = [
     { name = "ipykernel" },
     { name = "nox" },
     { name = "pre-commit" },
+    { name = "pylint" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-github-actions-annotate-failures" },
-    { name = "sybil" },
+    { name = "sybil", extra = ["pytest"] },
+]
+lint = [
+    { name = "pre-commit" },
+    { name = "pylint" },
 ]
 nox = [
     { name = "nox" },
-]
-pylint = [
-    { name = "pylint" },
 ]
 test = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-github-actions-annotate-failures" },
-    { name = "sybil" },
+    { name = "sybil", extra = ["pytest"] },
 ]
 
 [package.metadata]
@@ -1733,18 +1741,22 @@ dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "nox", specifier = ">=2024.10.9" },
     { name = "pre-commit", specifier = ">=4.1.0" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-cov", specifier = ">=3" },
+    { name = "pylint", specifier = ">=3.3.8" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "pytest-github-actions-annotate-failures", specifier = ">=0.2.0" },
-    { name = "sybil", specifier = ">=8.0.0" },
+    { name = "sybil", extras = ["pytest"], specifier = ">=9.2.0" },
+]
+lint = [
+    { name = "pre-commit", specifier = ">=4.1.0" },
+    { name = "pylint", specifier = ">=3.3.8" },
 ]
 nox = [{ name = "nox", specifier = ">=2024.10.9" }]
-pylint = [{ name = "pylint", specifier = ">=3.3.8" }]
 test = [
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-cov", specifier = ">=3" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "pytest-github-actions-annotate-failures", specifier = ">=0.2.0" },
-    { name = "sybil", specifier = ">=8.0.0" },
+    { name = "sybil", extras = ["pytest"], specifier = ">=9.2.0" },
 ]
 
 [[package]]

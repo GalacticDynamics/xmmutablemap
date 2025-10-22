@@ -36,30 +36,33 @@ Homepage = "https://github.com/GalacticDynamics/xmmutablemap"
 Discussions = "https://github.com/GalacticDynamics/xmmutablemap/discussions"
 Changelog = "https://github.com/GalacticDynamics/xmmutablemap/releases"
 
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+
 [dependency-groups]
 dev = [
   "ipykernel>=6.29.5",
   "cz-conventional-gitmoji>=0.6.1",
-  "pre-commit>=4.1.0",
+  {include-group = "lint"},
   {include-group = "nox"},
   {include-group = "test"},
 ]
-pylint = [
+lint = [
+    "pre-commit>=4.1.0",
     "pylint>=3.3.8",
 ]
 nox = [
     "nox>=2024.10.9",
 ]
 test = [
-  "pytest>=8.3.3",
-  "pytest-cov>=3",
+  "pytest>=8.4.2",
+  "pytest-cov>=6.2.1",
   "pytest-github-actions-annotate-failures>=0.2.0",
-  "sybil>=8.0.0",
+  "sybil[pytest]>=9.2.0",
 ]
-
-[build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
 
 
 [tool.hatch]
@@ -72,7 +75,7 @@ name = "cz_gitmoji"
 
 
 [tool.pytest.ini_options]
-minversion = "8.3"
+minversion = "8"
 addopts = [
   "--showlocals",
   "--strict-config",
