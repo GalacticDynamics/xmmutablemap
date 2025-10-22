@@ -6,8 +6,7 @@ xmmutablemap: Immutable Map, compatible with JAX & Equinox
 __all__ = ("ImmutableMap",)
 
 from collections.abc import ItemsView, Iterable, Iterator, KeysView, Mapping, ValuesView
-from typing import Annotated, Any, TypeVar, overload
-from typing_extensions import Doc
+from typing import Any, TypeVar, overload
 
 from jax.tree_util import register_pytree_node_class
 
@@ -234,15 +233,16 @@ class ImmutableMap(Mapping[K, V]):
     # ===========================================
     # JAX PyTree
 
-    def tree_flatten(
-        self,
-    ) -> tuple[
-        Annotated[tuple[V, ...], Doc("The values.")],
-        Annotated[tuple[K, ...], Doc("The keys as auxiliary data.")],
-    ]:
+    def tree_flatten(self) -> tuple[tuple[V, ...], tuple[K, ...]]:
         """Flatten dict to the values (and keys).
 
         This is used for JAX's tree flattening.
+
+        Returns
+        -------
+        tuple[tuple[V, ...], tuple[K, ...]]
+            A tuple of (values, keys).
+            The keys are treated as auxiliary data.
 
         Examples
         --------
@@ -260,13 +260,18 @@ class ImmutableMap(Mapping[K, V]):
 
     @classmethod
     def tree_unflatten(
-        cls,
-        aux_data: Annotated[tuple[K, ...], Doc("The keys.")],
-        children: Annotated[tuple[V, ...], Doc("The values.")],
+        cls, aux_data: tuple[K, ...], children: tuple[V, ...]
     ) -> "ImmutableMap[K, V]":
         """Unflatten into an ImmutableMap from the keys and values.
 
         This is used for JAX's tree un-flattening.
+
+        Parameters
+        ----------
+        aux_data : tuple[K, ...]
+            The keys.
+        children : tuple[V, ...]
+            The values.
 
         Examples
         --------
