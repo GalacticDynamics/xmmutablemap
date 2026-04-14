@@ -99,6 +99,10 @@ class ImmutableMap(Mapping[K, V]):
             return self._data == dict(other.items())
         return NotImplemented
 
+    def __hash__(self) -> int:
+        """Return an order-insensitive hash based on the mapping contents."""
+        return hash(frozenset(self._data.items()))
+
     # ===========================================
     # Mapping Protocol
 
