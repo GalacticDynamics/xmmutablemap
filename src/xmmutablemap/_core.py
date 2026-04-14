@@ -89,6 +89,23 @@ class ImmutableMap(Mapping[K, V]):
         """
         return len(self._data)
 
+    def __eq__(self, other: object) -> bool:
+        """Return whether two mappings contain the same items."""
+        if isinstance(other, ImmutableMap):
+            return self._data == other._data
+        if isinstance(other, Mapping):
+            if len(self._data) != len(other):
+                return False
+            for key, value in other.items():
+                try:
+                    self_value = self._data[key]
+                except KeyError:
+                    return False
+                if self_value != value:
+                    return False
+            return True
+        return NotImplemented
+
     # ===========================================
     # Mapping Protocol
 
@@ -215,7 +232,7 @@ class ImmutableMap(Mapping[K, V]):
         True
 
         """
-        return hash(tuple(self._data.items()))
+        return hash(frozenset(self._data.items()))
 
     def __repr__(self) -> str:
         """Return the representation.
