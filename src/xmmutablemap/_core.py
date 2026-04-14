@@ -97,9 +97,11 @@ class ImmutableMap(Mapping[K, V]):
             if len(self._data) != len(other):
                 return False
             for key, value in other.items():
-                if key not in self._data:
+                try:
+                    self_value = self._data[key]
+                except KeyError:
                     return False
-                if self._data[key] != value:
+                if self_value != value:
                     return False
             return True
         return NotImplemented
