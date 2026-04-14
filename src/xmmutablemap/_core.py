@@ -96,10 +96,12 @@ class ImmutableMap(Mapping[K, V]):
         if isinstance(other, Mapping):
             if len(self._data) != len(other):
                 return False
-            sentinel = object()
-            return all(
-                self._data.get(key, sentinel) == value for key, value in other.items()
-            )
+            for key, value in other.items():
+                if key not in self._data:
+                    return False
+                if self._data[key] != value:
+                    return False
+            return True
         return NotImplemented
 
     # ===========================================
