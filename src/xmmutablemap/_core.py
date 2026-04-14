@@ -94,7 +94,12 @@ class ImmutableMap(Mapping[K, V]):
         if isinstance(other, ImmutableMap):
             return self._data == other._data
         if isinstance(other, Mapping):
-            return self._data == dict(other.items())
+            if len(self._data) != len(other):
+                return False
+            sentinel = object()
+            return all(
+                self._data.get(key, sentinel) == value for key, value in other.items()
+            )
         return NotImplemented
 
     # ===========================================

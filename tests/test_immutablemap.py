@@ -67,9 +67,16 @@ class TestImmutableMap:
     def test_eq_with_other_mappings(self) -> None:
         """Test mapping interoperability for `__eq__`."""
         d = ImmutableMap(a=1, b=2)
+        other_dict = {"a": 1, "b": 2}
+        other_ordered_dict = OrderedDict([("a", 1), ("b", 2)])
+        other_proxy = MappingProxyType({"a": 1, "b": 2})
+
         assert d == {"a": 1, "b": 2}
         assert d == OrderedDict([("a", 1), ("b", 2)])
         assert d == MappingProxyType({"a": 1, "b": 2})
+        assert other_dict == d
+        assert other_ordered_dict == d
+        assert other_proxy == d
 
     def test_eq_and_hash_ignore_insertion_order(self) -> None:
         """Test equality/hash contract for same items in different orders."""
