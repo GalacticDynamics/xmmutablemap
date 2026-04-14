@@ -64,8 +64,9 @@ class TestImmutableMap:
         with pytest.raises(TypeError, match="unhashable type: 'set'"):
             hash(d)
 
-    def test_eq_with_other_mappings(self, d: ImmutableMap[str, Any]) -> None:
+    def test_eq_with_other_mappings(self) -> None:
         """Test mapping interoperability for `__eq__`."""
+        d = ImmutableMap(a=1, b=2)
         assert d == {"a": 1, "b": 2}
         assert d == OrderedDict([("a", 1), ("b", 2)])
         assert d == MappingProxyType({"a": 1, "b": 2})
