@@ -57,12 +57,33 @@ class TestImmutableMap:
 
     def test_hash(self, d: ImmutableMap[str, Any]) -> None:
         """Test `__hash__`."""
-        assert hash(d) == hash(tuple(d.items()))
+        assert hash(d) == hash(frozenset(d.items()))
 
         # Not hashable if values aren't hashable.
         d = ImmutableMap(a=1, b={"c"})
         with pytest.raises(TypeError, match="unhashable type: 'set'"):
             hash(d)
+
+    def test_eq_with_other_mappings(self) -> None:
+        """Test mapping interoperability for `__eq__`."""
+        d = ImmutableMap(a=1, b=2)
+        other_dict = {"a": 1, "b": 2}
+        other_ordered_dict = OrderedDict([("a", 1), ("b", 2)])
+        other_proxy = MappingProxyType({"a": 1, "b": 2})
+
+        assert d == {"a": 1, "b": 2}
+        assert d == OrderedDict([("a", 1), ("b", 2)])
+        assert d == MappingProxyType({"a": 1, "b": 2})
+        assert other_dict == d
+        assert other_ordered_dict == d
+        assert other_proxy == d
+
+    def test_eq_and_hash_ignore_insertion_order(self) -> None:
+        """Test equality/hash contract for same items in different orders."""
+        d1 = ImmutableMap(a=1, b=2)
+        d2 = ImmutableMap(b=2, a=1)
+        assert d1 == d2
+        assert hash(d1) == hash(d2)
 
     def test_keys(self, d: ImmutableMap[str, Any]) -> None:
         """Test `keys`."""
