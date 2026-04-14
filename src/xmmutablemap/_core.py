@@ -89,7 +89,7 @@ class ImmutableMap(Mapping[K, V]):
         """
         return len(self._data)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Return whether two mappings contain the same items."""
         if isinstance(other, ImmutableMap):
             return self._data == other._data
