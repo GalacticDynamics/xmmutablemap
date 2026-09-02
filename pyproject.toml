@@ -75,6 +75,12 @@ test = [
 build.hooks.vcs.version-file = "src/xmmutablemap/_version.py"
 version.source = "vcs"
 
+[tool.hatch.build.targets.sdist]
+core-metadata-version = "2.4"
+
+[tool.hatch.build.targets.wheel]
+core-metadata-version = "2.4"
+
 
 [tool.codespell]
 skip = ["uv.lock"]
