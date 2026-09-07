@@ -61,6 +61,45 @@ print(ImmutableMap({"a": 1, "b": 2.0, "c": "3"}))
 # ImmutableMap({'a': 1, 'b': 2.0, 'c': '3'})
 ```
 
+### Relationship to `frozendict` (PEP 814)
+
+Python 3.15 adds a built-in `frozendict`
+([PEP 814](https://peps.python.org/pep-0814/)), which covers most of what
+`ImmutableMap` was written for. `ImmutableMap` is now a **subclass of it**, so
+the two interoperate directly:
+
+```python
+from xmmutablemap import ImmutableMap, frozendict
+
+d = ImmutableMap(a=1, b=2)
+
+print(isinstance(d, frozendict))
+# True
+print(d == frozendict(a=1, b=2) == {"a": 1, "b": 2})
+# True
+```
+
+On Python 3.15+, `xmmutablemap.frozendict` _is_ the built-in. On older Pythons
+it is a behaviour-matched stand-in, so this code works the same on every
+supported version and you can migrate ahead of your Python floor.
+
+The one thing the built-in cannot do is act as a JAX PyTree. JAX's registry is
+keyed on the exact type, and `frozendict` is not registered, so JAX treats a
+bare `frozendict` as an opaque **leaf** rather than a container:
+
+```python
+import jax
+
+print(jax.tree.structure(frozendict(a=1, b=2)))
+# PyTreeDef(*)
+print(jax.tree.structure(ImmutableMap(a=1, b=2)))
+# PyTreeDef(CustomNode(ImmutableMap[('a', 'b')], [*, *]))
+```
+
+That registration is the reason this package still exists. Once JAX registers
+the built-in upstream, `ImmutableMap` becomes a thin alias and this package can
+be retired.
+
 ### JAX Integration
 
 One of the key benefits of `ImmutableMap` is its compatibility with JAX. Since

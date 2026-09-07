@@ -3,9 +3,9 @@
 xmmutablemap: Immutable Map, compatible with JAX & Equinox
 """
 
-__all__ = ["ImmutableMap", "__version__"]
+__all__ = ["ImmutableMap", "__version__", "frozendict"]
 
-from ._core import ImmutableMap
+from ._core import ImmutableMap, frozendict
 
 try:
     from ._version import version as __version__
