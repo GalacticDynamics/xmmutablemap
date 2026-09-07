@@ -63,8 +63,9 @@ jobs:
 
       - name: Upload coverage artifact
         if: >-
-          matrix.runs-on == 'ubuntu-latest' && matrix.python-version == '3.13' &&
-          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+          matrix.runs-on == 'ubuntu-latest' && matrix.python-version == '3.13'
+          && (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report-python
@@ -73,8 +74,9 @@ jobs:
   upload-coverage-python:
     needs: tests
     if: >-
-      ${{ !cancelled() && needs.tests.result == 'success' &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+      ${{ !cancelled() && needs.tests.result == 'success' && (github.event_name
+      != 'pull_request' || github.event.pull_request.head.repo.full_name ==
+      github.repository) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
