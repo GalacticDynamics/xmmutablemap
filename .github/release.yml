@@ -1,4 +1,14 @@
 changelog:
+  exclude:
+    authors:
+      # The backport bot. Its PRs duplicate one already listed from `main`,
+      # and put it in "New Contributors".
+      #
+      # This setting is repo-wide, with no per-branch form: every PR merged
+      # into `versions/v0.2.x` is a backport, so auto-generated notes for a
+      # release cut from that branch will be empty. Write those by hand, or
+      # copy them from the corresponding `main` release.
+      - meeseeksmachine
   categories:
     - title: ✨ Features
       labels:
