@@ -3,26 +3,38 @@
 xmmutablemap: Immutable Map, compatible with JAX & Equinox
 """
 
-__all__ = ("ImmutableMap",)
+__all__ = ("ImmutableMap", "frozendict")
 
-from collections.abc import ItemsView, Iterable, Iterator, KeysView, Mapping, ValuesView
-from typing import Any, TypeVar, overload
+import sys
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 from jax.tree_util import register_pytree_node_class
 
-_T = TypeVar("_T")
+if sys.version_info >= (3, 15):
+    # PEP 814 built-in. Not exercised by CI, which runs 3.10 and 3.13; the
+    # backport below is what those cover.
+    from builtins import frozendict  # pragma: no cover
+else:
+    from ._frozendict import frozendict
+
 K = TypeVar("K")
 V = TypeVar("V")
 
 
 @register_pytree_node_class
-class ImmutableMap(Mapping[K, V]):
-    """Immutable string-keyed dictionary.
+class ImmutableMap(frozendict[K, V]):
+    """Immutable mapping that JAX understands as a PyTree.
+
+    A `frozendict` (`PEP 814 <https://peps.python.org/pep-0814/>`_ on Python
+    3.15+, a matching stand-in below that) registered as a JAX PyTree node.
+    Everything a `frozendict` does, it does; the difference is that JAX
+    traverses it as a container rather than treating it as an opaque leaf.
 
     Parameters
     ----------
-    *args : tuple[str, V]
-        Key-value pairs.
+    *args : Mapping[K, V] | Iterable[tuple[K, V]]
+        At most one positional argument, as for `dict`.
     **kwargs : V
         Key-value pairs.
 
@@ -33,165 +45,34 @@ class ImmutableMap(Mapping[K, V]):
     >>> d
     ImmutableMap({'a': 1, 'b': 2})
 
+    It is a `frozendict`, and compares equal to any equal mapping:
+
+    >>> from xmmutablemap import frozendict
+    >>> isinstance(d, frozendict)
+    True
+    >>> d == {"a": 1, "b": 2}
+    True
+
+    Being immutable, it is hashable, order-independently:
+
+    >>> hash(ImmutableMap(a=1, b=2)) == hash(ImmutableMap(b=2, a=1))
+    True
+
+    Unlike a plain `frozendict`, JAX sees the structure:
+
+    >>> import jax
+    >>> jax.tree.structure(d)
+    PyTreeDef(CustomNode(ImmutableMap[('a', 'b')], [*, *]))
+
     """
 
-    def __init__(
-        self,
-        /,
-        *args: Mapping[K, V] | tuple[K, V] | Iterable[tuple[K, V]],
-        **kwargs: V,
-    ) -> None:
-        self._data: dict[K, V] = dict(*args, **kwargs)  # type: ignore[assignment]
+    __slots__ = ()
 
-    # ===========================================
-    # Collection Protocol
+    def __or__(self, other: Any, /) -> "ImmutableMap[K, V]":
+        """Merge with another mapping, keeping this type.
 
-    def __contains__(self, key: Any) -> bool:
-        """Check if the key is in the map.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> "a" in d
-        True
-        >>> "c" in d
-        False
-
-        """
-        return key in self._data
-
-    def __iter__(self) -> Iterator[K]:
-        """Return an iterator over the keys.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> [k for k in d]
-        ['a', 'b']
-        >>> list(d)
-        ['a', 'b']
-
-        """
-        return iter(self._data)
-
-    def __len__(self) -> int:
-        """Return the number of items in the map.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> len(d)
-        2
-
-        """
-        return len(self._data)
-
-    def __eq__(self, other: object) -> bool:
-        """Return whether two mappings contain the same items."""
-        if isinstance(other, ImmutableMap):
-            return self._data == other._data
-        if isinstance(other, Mapping):
-            if len(self._data) != len(other):
-                return False
-            for key, value in other.items():
-                try:
-                    self_value = self._data[key]
-                except KeyError:
-                    return False
-                if self_value != value:
-                    return False
-            return True
-        return NotImplemented
-
-    # ===========================================
-    # Mapping Protocol
-
-    def __getitem__(self, key: K) -> V:
-        """Get an item by key.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> d["a"]
-        1
-        >>> d["c"]
-        Traceback (most recent call last):
-          ...
-        KeyError: 'c'
-
-        """
-        return self._data[key]
-
-    def keys(self) -> KeysView[K]:
-        """Return the keys.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> d.keys()
-        dict_keys(['a', 'b'])
-
-        """
-        return self._data.keys()
-
-    def values(self) -> ValuesView[V]:
-        """Return the values.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> d.values()
-        dict_values([1, 2])
-
-        """
-        return self._data.values()
-
-    def items(self) -> ItemsView[K, V]:
-        """Return the items.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> d.items()
-        dict_items([('a', 1), ('b', 2)])
-
-        """
-        return self._data.items()
-
-    @overload
-    def get(self, key: K, /) -> V | None: ...
-
-    @overload
-    def get(self, key: K, /, default: V | _T) -> V | _T: ...
-
-    def get(self, key: K, /, default: V | _T | None = None) -> V | _T | None:
-        """Get an item by key.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> d.get("a")
-        1
-        >>> d.get("c")
-        >>> d.get("c", 3)
-        3
-
-        """
-        return self._data.get(key, default)
-
-    # ===========================================
-    # Extending Mapping
-
-    def __or__(self, value: Any, /) -> "ImmutableMap[K, V]":
-        """Return a new ImmutableMap combining this with another mapping.
+        `frozendict.__or__` hardcodes its result type, so a subclass would
+        otherwise get a plain `frozendict` back.
 
         Examples
         --------
@@ -207,45 +88,25 @@ class ImmutableMap(Mapping[K, V]):
         Cannot combine with non-mapping
 
         """
-        if not isinstance(value, Mapping):
+        if not isinstance(other, Mapping):
             return NotImplemented
+        return type(self)(dict(self) | dict(other))
 
-        return type(self)(self._data | dict(value))
+    def copy(self) -> "ImmutableMap[K, V]":
+        """Return a shallow copy, which for an immutable map is itself.
 
-    def __ror__(self, value: Any) -> Any:
-        return value | self._data
-
-    # ===========================================
-    # Other
-
-    def __hash__(self) -> int:
-        """Hash.
-
-        Normally, dictionaries are not hashable because they are mutable.
-        However, this dictionary is immutable, so we can hash it.
+        `frozendict.copy` returns a plain `frozendict` for a subclass; return
+        `self` instead, as the built-in does for an exact `frozendict`.
 
         Examples
         --------
         >>> from xmmutablemap import ImmutableMap
         >>> d = ImmutableMap(a=1, b=2)
-        >>> isinstance(hash(d), int)
+        >>> d.copy() is d
         True
 
         """
-        return hash(frozenset(self._data.items()))
-
-    def __repr__(self) -> str:
-        """Return the representation.
-
-        Examples
-        --------
-        >>> from xmmutablemap import ImmutableMap
-        >>> d = ImmutableMap(a=1, b=2)
-        >>> repr(d)
-        "ImmutableMap({'a': 1, 'b': 2})"
-
-        """
-        return f"{self.__class__.__name__}({self._data!r})"
+        return self
 
     # ===========================================
     # JAX PyTree
@@ -273,7 +134,7 @@ class ImmutableMap(Mapping[K, V]):
         ([1, 2], PyTreeDef(CustomNode(ImmutableMap[('a', 'b')], [*, *])))
 
         """
-        return tuple(self._data.values()), tuple(self._data.keys())
+        return tuple(self.values()), tuple(self.keys())
 
     @classmethod
     def tree_unflatten(
