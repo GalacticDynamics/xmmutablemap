@@ -207,6 +207,10 @@ class ImmutableMap(Mapping[K, V]):
         Normally, dictionaries are not hashable because they are mutable.
         However, this dictionary is immutable, so we can hash it.
 
+        The hash is computed from an order-independent view of the items, to
+        match the order-independent equality inherited from `Mapping`. Equal
+        maps therefore always hash equally, whatever their insertion order.
+
         Examples
         --------
         >>> from xmmutablemap import ImmutableMap
@@ -214,8 +218,16 @@ class ImmutableMap(Mapping[K, V]):
         >>> isinstance(hash(d), int)
         True
 
+        Insertion order does not affect equality, and so must not affect the
+        hash:
+
+        >>> ImmutableMap(a=1, b=2) == ImmutableMap(b=2, a=1)
+        True
+        >>> hash(ImmutableMap(a=1, b=2)) == hash(ImmutableMap(b=2, a=1))
+        True
+
         """
-        return hash(tuple(self._data.items()))
+        return hash(frozenset(self._data.items()))
 
     def __repr__(self) -> str:
         """Return the representation.

@@ -57,12 +57,24 @@ class TestImmutableMap:
 
     def test_hash(self, d: ImmutableMap[str, Any]) -> None:
         """Test `__hash__`."""
-        assert hash(d) == hash(tuple(d.items()))
+        assert hash(d) == hash(frozenset(d.items()))
 
         # Not hashable if values aren't hashable.
         d = ImmutableMap(a=1, b={"c"})
         with pytest.raises(TypeError, match="unhashable type: 'set'"):
             hash(d)
+
+    def test_hash_eq_invariant(self) -> None:
+        """Equal maps must hash equally, regardless of insertion order."""
+        d1 = ImmutableMap(a=1, b=2)
+        d2 = ImmutableMap(b=2, a=1)
+
+        assert d1 == d2
+        assert hash(d1) == hash(d2)
+
+        # The invariant is what makes set/dict membership work.
+        assert len({d1, d2}) == 1
+        assert d2 in {d1: "value"}
 
     def test_keys(self, d: ImmutableMap[str, Any]) -> None:
         """Test `keys`."""
