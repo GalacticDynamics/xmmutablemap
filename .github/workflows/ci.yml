@@ -71,6 +71,26 @@ jobs:
           name: coverage-report-python
           path: coverage.xml
 
+  # Canary: resolve the newest releases instead of the lockfile, so a breaking
+  # change (e.g. a new pytest major) surfaces here before it lands in uv.lock.
+  # Deliberately not in `status`, so an upstream release cannot block merges.
+  tests-latest:
+    name: Check newest dependencies
+    runs-on: ubuntu-latest
+    needs: [format]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@702b425af1c366e68b4a9449a8de6dd98b63e979 # v7.1.2
+        with:
+          python-version: "3.13"
+
+      - name: Test package
+        run:
+          uv run --no-default-groups --group test --upgrade pytest
+          --durations=20
+
   upload-coverage-python:
     needs: tests
     if: >-
