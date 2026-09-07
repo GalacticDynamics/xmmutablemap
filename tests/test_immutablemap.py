@@ -12,7 +12,7 @@ from xmmutablemap import ImmutableMap
 class TestImmutableMap:
     """Test :class:`ImmutableMap`."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def d(self) -> ImmutableMap[str, Any]:
         """Example immutable map."""
         return ImmutableMap(a=1, b=2)
