@@ -78,6 +78,27 @@ class TestImmutableMap:
         assert other_ordered_dict == d
         assert other_proxy == d
 
+    def test_eq_with_unequal_mappings(self) -> None:
+        """Test `__eq__` returns `False` for unequal mappings."""
+        d = ImmutableMap(a=1, b=2)
+
+        # Different length.
+        assert d != {"a": 1}
+        assert d != {"a": 1}
+
+        # Same length, but a missing key.
+        assert d != {"a": 1, "c": 2}
+        assert d != {"a": 1, "c": 2}
+
+        # Same keys, but a differing value.
+        assert d != {"a": 1, "b": 3}
+        assert d != {"a": 1, "b": 3}
+
+    def test_eq_with_non_mapping(self, d: ImmutableMap[str, Any]) -> None:
+        """Test `__eq__` returns `NotImplemented`/`False` for non-mappings."""
+        assert d != 1
+        assert d.__eq__(1) is NotImplemented
+
     def test_eq_and_hash_ignore_insertion_order(self) -> None:
         """Test equality/hash contract for same items in different orders."""
         d1 = ImmutableMap(a=1, b=2)
