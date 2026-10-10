@@ -112,15 +112,22 @@ class ImmutableMap(frozendict[K, V]):
     # JAX PyTree
 
     def tree_flatten(self) -> tuple[tuple[V, ...], tuple[K, ...]]:
-        """Flatten dict to the values (and keys).
+        """Flatten dict to the values (and keys), in sorted-key order.
 
-        This is used for JAX's tree flattening.
+        This is used for JAX's tree flattening. Keys are sorted, as JAX does
+        for `dict` and the built-in `frozendict`, so the leaf order matches
+        theirs and unflattening rebuilds the map in sorted order.
 
         Returns
         -------
         tuple[tuple[V, ...], tuple[K, ...]]
             A tuple of (values, keys).
             The keys are treated as auxiliary data.
+
+        Raises
+        ------
+        TypeError
+            If the keys cannot be ordered against each other.
 
         Examples
         --------
@@ -133,8 +140,14 @@ class ImmutableMap(frozendict[K, V]):
         >>> jax.tree.flatten(d)
         ([1, 2], PyTreeDef(CustomNode(ImmutableMap[('a', 'b')], [*, *])))
 
+        Insertion order does not matter:
+
+        >>> ImmutableMap(b=2, a=1).tree_flatten()
+        ((1, 2), ('a', 'b'))
+
         """
-        return tuple(self.values()), tuple(self.keys())
+        keys = tuple(sorted(self))  # type: ignore[type-var]  # may raise, as in JAX
+        return tuple(self[k] for k in keys), keys
 
     @classmethod
     def tree_unflatten(

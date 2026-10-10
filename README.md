@@ -105,12 +105,13 @@ print(jax.tree.structure(frozendict(a=1, b=2)))
 
 > [!WARNING]
 >
-> **Leaf order differs.** JAX flattens a built-in `frozendict` like a `dict`:
-> leaves come out in **sorted key order**, unflattening rebuilds the map in
-> sorted order, and keys that cannot be sorted against each other raise an
-> error. `ImmutableMap` flattens in **insertion order**. So for
-> `ImmutableMap(b=1, a=2)`, `jax.tree.leaves` gives `[1, 2]`, while for
-> `frozendict(b=1, a=2)` it gives `[2, 1]`. The treedefs differ too. Before
+> **Leaf order.** JAX flattens a built-in `frozendict` like a `dict`: leaves
+> come out in **sorted key order**, unflattening rebuilds the map in sorted
+> order, and keys that cannot be sorted against each other raise an error.
+> `ImmutableMap` does the same, so switching to the built-in keeps leaf order.
+> Earlier releases of `ImmutableMap` flattened in **insertion order** (for
+> `ImmutableMap(b=1, a=2)`, `jax.tree.leaves` gave `[1, 2]`; it now gives
+> `[2, 1]`). The treedefs of the two types also still differ. When upgrading or
 > switching, check anything that depends on leaf position or tree structure,
 > such as indexing `jax.tree.leaves`, saved optimizer states, or checkpoints.
 
