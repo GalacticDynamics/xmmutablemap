@@ -115,6 +115,11 @@ print(jax.tree.structure(frozendict(a=1, b=2)))
 > switching, check anything that depends on leaf position or tree structure,
 > such as indexing `jax.tree.leaves`, saved optimizer states, or checkpoints.
 
+One deliberate difference: `ImmutableMap | other` merges **any** `Mapping`,
+while `frozendict | other` merges only a `dict` or `frozendict` (so, for
+example, a custom `Mapping` with no `|` of its own raises `TypeError`). Convert
+such mappings with `dict(...)` when switching to the built-in.
+
 ### JAX Integration
 
 One of the key benefits of `ImmutableMap` is its compatibility with JAX. Since

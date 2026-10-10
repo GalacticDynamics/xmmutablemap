@@ -154,6 +154,14 @@ class TestImmutableMap:
         assert d | OrderedDict([("c", 3)]) == ImmutableMap(a=1, b=2, c=3)
         assert d | MappingProxyType({"c": 3}) == ImmutableMap(a=1, b=2, c=3)
 
+        # Looser than `frozendict`: any Mapping merges, even one with no `|`.
+        assert d | Plain({"c": 3}) == ImmutableMap(a=1, b=2, c=3)
+        with pytest.raises(TypeError, match="unsupported operand type"):
+            _ = frozendict(a=1) | Plain({"c": 3})
+        # ...but only on the left; the reflected `|` is `frozendict`'s.
+        with pytest.raises(TypeError, match="unsupported operand type"):
+            _ = Plain({"c": 3}) | d
+
         # Should raise TypeError if not a mapping.
         with pytest.raises(TypeError, match="unsupported operand type"):
             _ = d | 1
