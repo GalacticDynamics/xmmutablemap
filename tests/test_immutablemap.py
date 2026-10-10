@@ -1,5 +1,6 @@
 """Test :mod:`xmmutablemap`."""
 
+import copy
 import pickle
 from collections import OrderedDict
 from collections.abc import Iterator, Mapping
@@ -10,6 +11,22 @@ import jax
 import pytest
 
 from xmmutablemap import ImmutableMap, frozendict
+
+
+class Plain(Mapping[str, int]):
+    """A valid Mapping with no `__or__`."""
+
+    def __init__(self, d: dict[str, int]) -> None:  # noqa: D107
+        self._d = d
+
+    def __getitem__(self, k: str) -> int:  # noqa: D105
+        return self._d[k]
+
+    def __iter__(self) -> Iterator[str]:  # noqa: D105
+        return iter(self._d)
+
+    def __len__(self) -> int:  # noqa: D105
+        return len(self._d)
 
 
 class TestImmutableMap:
@@ -293,24 +310,83 @@ class TestFrozenDict:
         merge at all cannot merge here either. Verified against the 3.15
         built-in, which raises the same way.
         """
-
-        class Plain(Mapping[str, int]):
-            """A valid Mapping with no `__or__`."""
-
-            def __init__(self, d: dict[str, int]) -> None:
-                self._d = d
-
-            def __getitem__(self, k: str) -> int:
-                return self._d[k]
-
-            def __iter__(self) -> Iterator[str]:
-                return iter(self._d)
-
-            def __len__(self) -> int:
-                return len(self._d)
-
-        with pytest.raises(TypeError, match="unsupported operand type"):
+        with pytest.raises(TypeError, match="'Plain' and 'frozendict'"):
             _ = Plain({"b": 2}) | frozendict(a=1)
+
+    def test_or_only_merges_dicts(self) -> None:
+        """`|` merges only a `dict` or `frozendict`, not any `Mapping`."""
+        with pytest.raises(TypeError, match="'frozendict' and 'Plain'"):
+            _ = frozendict(a=1) | Plain({"b": 2})
+        # A mappingproxy has its own `|`, which unwraps it to a dict.
+        assert frozendict(a=1) | MappingProxyType({"b": 2}) == {"a": 1, "b": 2}
+        assert type(OrderedDict(b=2) | frozendict(a=1)) is OrderedDict
+
+    def test_init_cannot_mutate(self) -> None:
+        """Construction happens in `__new__`; calling `__init__` is a no-op."""
+        d = frozendict(a=1)
+        d.__init__(b=2)  # type: ignore[misc]
+        assert d == {"a": 1}
+
+    def test_too_many_args(self) -> None:
+        """More than one positional argument names `frozendict`."""
+        with pytest.raises(TypeError, match="^frozendict expected at most 1"):
+            frozendict({}, {})  # type: ignore[call-overload]
+
+    def test_constructor_returns_same_frozendict(self) -> None:
+        """`frozendict(d)` of an exact `frozendict` is `d`, as for `tuple`."""
+        d = frozendict(a=1)
+        assert frozendict(d) is d
+        assert frozendict(d, b=2) is not d
+        assert type(frozendict(ImmutableMap(a=1))) is frozendict
+
+    def test_subclass_init_receives_args(self) -> None:
+        """A subclass `__init__` runs after `__new__` has built the data."""
+
+        class Sub(frozendict[str, int]):
+            def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+                self.seen = dict(self)
+
+        assert Sub(a=1).seen == {"a": 1}
+
+    def test_hash_is_frozenset_of_items(self) -> None:
+        """The hash is that of the items' frozenset, as for the built-in."""
+        d = frozendict(a=1, b=2)
+        assert hash(d) == hash(frozenset(d.items()))
+        with pytest.raises(TypeError, match="^unhashable type: 'list'$"):
+            hash(frozendict(a=[1]))
+
+    def test_copy_module(self) -> None:
+        """`copy.copy` returns an exact `frozendict` itself; deepcopy copies."""
+        d = frozendict(a=[1])
+        assert copy.copy(d) is d
+        deep = copy.deepcopy(d)
+        assert deep == d
+        assert deep["a"] is not d["a"]
+
+        class Sub(frozendict[str, Any]):
+            pass
+
+        s = Sub(a=1)
+        s.x = 3  # type: ignore[attr-defined]
+        c = copy.copy(s)
+        assert type(c) is Sub
+        assert c is not s
+        assert c == s
+        assert c.x == 3  # type: ignore[attr-defined]
+
+    def test_getnewargs(self) -> None:
+        """Pickling goes through `__getnewargs__`, with a copy of the data."""
+        d = frozendict(a=1)
+        (data,) = d.__getnewargs__()
+        assert data == {"a": 1}
+        data["b"] = 2
+        assert d == {"a": 1}
+
+    @pytest.mark.parametrize("protocol", [0, 1])
+    def test_old_pickle_protocols_refused(self, protocol: int) -> None:
+        """Protocols 0 and 1 cannot rebuild through `__new__`, so they raise."""
+        with pytest.raises(TypeError, match="cannot pickle 'frozendict' object"):
+            pickle.dumps(frozendict(a=1), protocol)
 
     @pytest.mark.parametrize("cls", [frozendict, ImmutableMap])
     def test_no_attribute_mutation(self, cls: type) -> None:

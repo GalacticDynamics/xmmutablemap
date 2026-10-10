@@ -8,10 +8,23 @@ unused. On older Pythons this pure-Python stand-in takes its place, so that
 :class:`~xmmutablemap.ImmutableMap` can subclass ``frozendict`` on every
 supported version.
 
-Behaviour is matched to the built-in wherever it is observable, including the
-order-independent hash, equality with :class:`dict`, the ``frozendict({...})``
-repr (and bare ``frozendict()`` when empty), and ``|`` returning a plain
-``frozendict`` rather than the subclass.
+Behaviour is matched to the built-in (checked against CPython 3.15.0),
+including construction in ``__new__``, ``frozendict(d) is d`` for an exact
+``frozendict``, the hash (that of the items' ``frozenset``), equality with
+:class:`dict`, the ``frozendict({...})`` repr (and bare ``frozendict()`` when
+empty), ``|`` merging only a ``dict`` or ``frozendict`` and returning a plain
+``frozendict`` rather than the subclass, ``copy.copy``, and pickling.
+
+Known differences, all either inherent to a pure-Python class or cosmetic:
+
+- It subclasses :class:`collections.abc.Mapping` (so static type checkers see
+  a ``Mapping``); the built-in is only registered as one. This shows in the
+  MRO, ``dir()``, and the ``ABCMeta`` metaclass.
+- ``.keys().mapping`` (and the other views') wraps the backing ``dict``, not
+  the ``frozendict``.
+- Some error messages name ``dict`` (e.g. for unhashable keys) where the
+  built-in names ``frozendict``; the exception types match.
+- ``__module__``, ``inspect.signature``, and the like differ.
 """
 
 __all__ = ("frozendict",)
@@ -24,7 +37,9 @@ from collections.abc import (
     Mapping,
     ValuesView,
 )
-from typing import Any, TypeVar, cast, overload
+from copyreg import __newobj__  # type: ignore[attr-defined]
+from typing import Any, SupportsIndex, TypeVar, cast, overload
+from typing_extensions import Self
 
 _T = TypeVar("_T")
 K = TypeVar("K")
@@ -57,17 +72,30 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
     # `__slots__` alone gives instances no `__dict__`, so attributes can be
     # neither set nor deleted -- with the same message the built-in raises.
     # No `__setattr__` override is needed to reproduce that.
+    # ponytail: `_data` itself stays rebindable, being a slot; it is private.
     __slots__ = ("_data",)
 
     _data: dict[K, V]
 
-    def __init__(
-        self,
+    # Built in `__new__`, not `__init__`, as the built-in is: calling
+    # `__init__` again must not change the contents, and a subclass's own
+    # `__init__` sees an already-filled mapping.
+    def __new__(
+        cls,
         /,
         *args: Mapping[K, V] | Iterable[tuple[K, V]],
         **kwargs: V,
-    ) -> None:
+    ) -> "Self":
+        if len(args) > 1:
+            msg = f"frozendict expected at most 1 argument, got {len(args)}"
+            raise TypeError(msg)
+        # Like `tuple(t)`, an exact frozendict of an exact frozendict is itself.
+        # pylint: disable-next=unidiomatic-typecheck
+        if cls is frozendict and args and not kwargs and type(args[0]) is frozendict:
+            return cast("Self", args[0])
+        self = super().__new__(cls)
         self._data = dict(*args, **kwargs)  # type: ignore[assignment]
+        return self
 
     # ===========================================
     # Mapping protocol
@@ -190,7 +218,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         """
         return self._data.get(key, default)
 
-    def copy(self) -> "frozendict[K, V]":
+    def copy(self, /) -> "frozendict[K, V]":
         """Return a shallow copy.
 
         As the built-in does, an exact `frozendict` returns itself; a subclass
@@ -209,6 +237,67 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         # `self`. `ImmutableMap` overrides `copy` precisely because of this.
         # pylint: disable-next=unidiomatic-typecheck
         return self if type(self) is frozendict else frozendict(self._data)
+
+    def __copy__(self) -> "frozendict[K, V]":
+        """Support `copy.copy`.
+
+        The `copy` module treats an exact built-in `frozendict` as atomic and
+        copies a subclass through its pickle protocol. Match both.
+
+        Examples
+        --------
+        >>> import copy
+        >>> from xmmutablemap import frozendict
+        >>> d = frozendict(a=1)
+        >>> copy.copy(d) is d
+        True
+
+        """
+        # pylint: disable-next=unidiomatic-typecheck
+        if type(self) is frozendict:
+            return self
+        func, args, state, *_ = self.__reduce_ex__(4)
+        new = func(*args)
+        if state:
+            new.__dict__.update(state)
+        return cast("frozendict[K, V]", new)
+
+    def __getnewargs__(self) -> tuple[dict[K, V]]:
+        """Return the arguments `__new__` needs to rebuild this.
+
+        Examples
+        --------
+        >>> from xmmutablemap import frozendict
+        >>> frozendict(a=1).__getnewargs__()
+        ({'a': 1},)
+
+        """
+        return (dict(self._data),)
+
+    def __reduce_ex__(self, protocol: SupportsIndex, /) -> tuple[Any, ...]:
+        """Reduce for pickling and `copy`, exactly as the built-in does.
+
+        The data is the `__new__` argument, and only a subclass's instance
+        `__dict__` (if any) is state. Spelled out here, rather than left to
+        `object`, so pickles rebuild through `__new__`; protocols 0 and 1,
+        which cannot, are refused as the built-in refuses them.
+
+        Examples
+        --------
+        >>> from xmmutablemap import frozendict
+        >>> frozendict(a=1).__reduce_ex__(4)[1:]
+        ((<class '...frozendict'>, {'a': 1}), None, None, None)
+
+        """
+        if protocol < 2:  # type: ignore[operator]
+            # The built-in, needing `__newobj__`, refuses protocols 0 and 1,
+            # naming `frozendict` even for a subclass.
+            msg = "cannot pickle 'frozendict' object"
+            raise TypeError(msg)
+        # ponytail: extra `__slots__` on a subclass are not pickled; add them
+        # to the state if a subclass ever needs them.
+        state = getattr(self, "__dict__", None) or None
+        return __newobj__, (type(self), *self.__getnewargs__()), state, None, None
 
     @classmethod
     def fromkeys(
@@ -238,7 +327,9 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         frozendict({'a': 1, 'b': 2})
 
         """
-        if not isinstance(other, Mapping):
+        # The built-in merges only a `dict` or `frozendict`; any other
+        # mapping must bring its own `|` (as `mappingproxy` does).
+        if not isinstance(other, (dict, frozendict)):
             return NotImplemented
         # The built-in's C implementation hardcodes the result type, so a
         # subclass of `frozendict` gets a plain `frozendict` back. Match that.
@@ -254,11 +345,9 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         The left operand drives the merge, which reproduces the built-in's
         results -- including keeping the left-hand type.
 
-        A `Mapping` that implements no ``|`` of its own raises `TypeError`
-        here, exactly as it does for the built-in: ``__ror__`` is not a
-        promise to merge into any mapping whatsoever. The one difference is
-        cosmetic -- the message names ``dict``, this class's backing store,
-        where the built-in names ``frozendict``.
+        As with the built-in, only a `dict` (or subclass) merges this way;
+        any other `Mapping` gets ``NotImplemented``, so ``|`` raises
+        `TypeError` unless that mapping brings its own ``|``.
 
         Examples
         --------
@@ -270,11 +359,11 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         'OrderedDict'
 
         """
-        if not isinstance(other, Mapping):
+        if not isinstance(other, dict):
             return NotImplemented
-        # `other` is some Mapping; let it drive the merge so that e.g.
-        # `OrderedDict | frozendict` stays an OrderedDict.
-        return cast("Any", other) | self._data
+        # Let the dict drive the merge so that e.g. `OrderedDict | frozendict`
+        # stays an OrderedDict.
+        return other | self._data
 
     # ===========================================
     # Other
@@ -312,18 +401,26 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
     def __hash__(self) -> int:
         """Hash, order-independently, as the built-in does.
 
-        The hash *value* differs from the built-in's -- hashes are not stable
-        across interpreters or releases -- but the semantics match: equal
-        mappings hash equally whatever their insertion order.
+        The value is that of the items' `frozenset`, which is exactly the
+        built-in's hash.
 
         Examples
         --------
         >>> from xmmutablemap import frozendict
         >>> hash(frozendict(a=1, b=2)) == hash(frozendict(b=2, a=1))
         True
+        >>> hash(frozendict(a=1)) == hash(frozenset({("a", 1)}))
+        True
 
         """
-        return hash(frozenset(self._data.items()))
+        try:
+            return hash(frozenset(self._data.items()))
+        except TypeError:
+            # Re-raise as the built-in does, naming the unhashable value
+            # rather than the `(key, value)` tuple holding it.
+            for value in self._data.values():
+                hash(value)
+            raise  # pragma: no cover  # only if a value's hash is flaky
 
     def __repr__(self) -> str:
         """Return the representation.
