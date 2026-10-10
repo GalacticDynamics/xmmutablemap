@@ -12,8 +12,8 @@ from typing import Any, TypeVar
 from jax.tree_util import register_pytree_node_class
 
 if sys.version_info >= (3, 15):
-    # PEP 814 built-in. Not exercised by CI, which runs 3.10 and 3.13; the
-    # backport below is what those cover.
+    # PEP 814 built-in, exercised by the 3.15 CI jobs; the 3.10 and 3.14 jobs
+    # cover the backport. Each job's report sees only one branch.
     from builtins import frozendict  # pragma: no cover
 else:
     from ._frozendict import frozendict
