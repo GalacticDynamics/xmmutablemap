@@ -6,6 +6,7 @@ from collections.abc import Iterator, Mapping
 from types import MappingProxyType
 from typing import Any
 
+import jax
 import pytest
 
 from xmmutablemap import ImmutableMap, frozendict
@@ -153,6 +154,18 @@ class TestImmutableMap:
     def test_tree_flatten(self, d: ImmutableMap[str, Any]) -> None:
         """Test `tree_flatten`."""
         assert d.tree_flatten() == ((1, 2), ("a", "b"))
+
+    def test_tree_flatten_sorts_keys(self) -> None:
+        """Leaves come out in sorted-key order, like JAX's `dict`/`frozendict`."""
+        d = ImmutableMap(b=1, a=2)
+        assert d.tree_flatten() == ((2, 1), ("a", "b"))
+        assert jax.tree.leaves(d) == [2, 1]
+        assert list(jax.tree.map(lambda x: x, d)) == ["a", "b"]
+
+    def test_tree_flatten_unsortable_keys(self) -> None:
+        """Keys that can't be ordered raise, as JAX does for `dict`."""
+        with pytest.raises(TypeError):
+            ImmutableMap({1: "x", "b": 2}).tree_flatten()
 
     def test_tree_unflatten(self, d: ImmutableMap[str, Any]) -> None:
         """Test `tree_unflatten`."""
