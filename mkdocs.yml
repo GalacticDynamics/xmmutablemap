@@ -1,0 +1,57 @@
+site_name: xmmutablemap
+site_description: An immutable mapping that JAX understands as a PyTree.
+site_url: https://galacticdynamics.github.io/xmmutablemap
+repo_url: https://github.com/GalacticDynamics/xmmutablemap
+repo_name: GalacticDynamics/xmmutablemap
+edit_uri: ""
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: white
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+  logo: _static/favicon.svg
+  favicon: _static/favicon.svg
+
+markdown_extensions:
+  - admonition
+  - github-callouts # render the README's > [!WARNING] alerts
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.snippets: # index.md pulls in the README
+      check_paths: true
+  - toc:
+      permalink: "¤"
+      toc_depth: 3
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            heading_level: 2
+            members_order: source
+            show_root_heading: true
+            show_source: false
+            show_signature_annotations: true
+
+nav:
+  - index.md
+  - API: api.md
