@@ -74,6 +74,12 @@ class ImmutableMap(frozendict[K, V]):
         `frozendict.__or__` hardcodes its result type, so a subclass would
         otherwise get a plain `frozendict` back.
 
+        Deliberately looser than `frozendict`: ``ImmutableMap | other``
+        merges *any* `Mapping`, whereas ``frozendict | other`` merges only a
+        `dict` or `frozendict` and raises `TypeError` for other mappings that
+        bring no ``|`` of their own. The reflected ``other | ImmutableMap``
+        is inherited from `frozendict` and is not loosened.
+
         Examples
         --------
         >>> from xmmutablemap import ImmutableMap
