@@ -1,9 +1,11 @@
 <h1 align='center'> xmmutablemap </h1>
 <h3 align="center"><code>JAX</code>-compatible Immutable Mapping</h3>
 
-JAX prefers immutable objects but neither Python nor JAX provide an immutable
-dictionary. 😢 </br> This repository defines a light-weight immutable map
-(lower-level than a dict) that JAX understands as a PyTree. 🎉 🕶️
+JAX prefers immutable objects, but before Python 3.15 there is no built-in
+immutable dictionary. 😢 </br> This repository defines a light-weight immutable
+map (lower-level than a dict) that JAX understands as a PyTree. 🎉 🕶️ On Python
+3.15+, prefer the built-in `frozendict`
+([see below](#prefer-the-built-in-frozendict-on-python-315)).
 
 ## Installation
 
@@ -83,22 +85,34 @@ On Python 3.15+, `xmmutablemap.frozendict` _is_ the built-in. On older Pythons
 it is a behaviour-matched stand-in, so this code works the same on every
 supported version and you can migrate ahead of your Python floor.
 
-The one thing the built-in cannot do is act as a JAX PyTree. JAX's registry is
-keyed on the exact type, and `frozendict` is not registered, so JAX treats a
-bare `frozendict` as an opaque **leaf** rather than a container:
+#### Prefer the built-in `frozendict` on Python 3.15+
+
+Since JAX 0.11.2, JAX registers the built-in `frozendict` as a PyTree node. **On
+Python 3.15+ with `jax>=0.11.2`, use the built-in `frozendict` directly**; it
+does everything `ImmutableMap` does, with no extra dependency. `ImmutableMap`
+remains for Python < 3.15, where the built-in does not exist (and JAX treats
+`xmmutablemap.frozendict`, the stand-in, as an opaque leaf).
 
 ```python
 import jax
 
-print(jax.tree.structure(frozendict(a=1, b=2)))
-# PyTreeDef(*)
 print(jax.tree.structure(ImmutableMap(a=1, b=2)))
 # PyTreeDef(CustomNode(ImmutableMap[('a', 'b')], [*, *]))
+print(jax.tree.structure(frozendict(a=1, b=2)))
+# Python 3.15+, jax>=0.11.2: PyTreeDef(frozendict({'a': *, 'b': *}))
+# older Pythons (the stand-in): PyTreeDef(*)
 ```
 
-That registration is the reason this package still exists. Once JAX registers
-the built-in upstream, `ImmutableMap` becomes a thin alias and this package can
-be retired.
+> [!WARNING]
+>
+> **Leaf order differs.** JAX flattens a built-in `frozendict` like a `dict`:
+> leaves come out in **sorted key order**, unflattening rebuilds the map in
+> sorted order, and keys that cannot be sorted against each other raise an
+> error. `ImmutableMap` flattens in **insertion order**. So for
+> `ImmutableMap(b=1, a=2)`, `jax.tree.leaves` gives `[1, 2]`, while for
+> `frozendict(b=1, a=2)` it gives `[2, 1]`. The treedefs differ too. Before
+> switching, check anything that depends on leaf position or tree structure,
+> such as indexing `jax.tree.leaves`, saved optimizer states, or checkpoints.
 
 ### JAX Integration
 
