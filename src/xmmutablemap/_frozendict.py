@@ -72,10 +72,12 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
     # `__slots__` alone gives instances no `__dict__`, so attributes can be
     # neither set nor deleted -- with the same message the built-in raises.
     # No `__setattr__` override is needed to reproduce that.
-    # ponytail: `_data` itself stays rebindable, being a slot; it is private.
-    __slots__ = ("_data",)
+    # The storage is name-mangled (to `_frozendict__data`): the built-in has no
+    # such attribute, so a subclass that sets its own `_data` must not reach it.
+    # ponytail: it stays rebindable, being a slot; it is private.
+    __slots__ = ("__data",)
 
-    _data: dict[K, V]
+    __data: dict[K, V]
 
     # Built in `__new__`, not `__init__`, as the built-in is: calling
     # `__init__` again must not change the contents, and a subclass's own
@@ -94,7 +96,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         if cls is frozendict and args and not kwargs and type(args[0]) is frozendict:
             return cast("Self", args[0])
         self = super().__new__(cls)
-        self._data = dict(*args, **kwargs)  # type: ignore[assignment]
+        self.__data = dict(*args, **kwargs)  # type: ignore[assignment]
         return self
 
     # ===========================================
@@ -110,7 +112,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         1
 
         """
-        return self._data[key]
+        return self.__data[key]
 
     def __iter__(self) -> Iterator[K]:
         """Iterate over the keys, in insertion order.
@@ -122,7 +124,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         ['a', 'b']
 
         """
-        return iter(self._data)
+        return iter(self.__data)
 
     def __len__(self) -> int:
         """Return the number of items.
@@ -134,7 +136,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         2
 
         """
-        return len(self._data)
+        return len(self.__data)
 
     def __contains__(self, key: object) -> bool:
         """Check whether a key is present.
@@ -146,7 +148,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         True
 
         """
-        return key in self._data
+        return key in self.__data
 
     def __reversed__(self) -> Iterator[K]:
         """Iterate over the keys in reverse insertion order.
@@ -158,7 +160,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         ['b', 'a']
 
         """
-        return reversed(self._data)
+        return reversed(self.__data)
 
     def keys(self) -> KeysView[K]:
         """Return a view of the keys.
@@ -170,7 +172,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         dict_keys(['a', 'b'])
 
         """
-        return self._data.keys()
+        return self.__data.keys()
 
     def values(self) -> ValuesView[V]:
         """Return a view of the values.
@@ -182,7 +184,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         dict_values([1, 2])
 
         """
-        return self._data.values()
+        return self.__data.values()
 
     def items(self) -> ItemsView[K, V]:
         """Return a view of the items.
@@ -194,7 +196,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         dict_items([('a', 1), ('b', 2)])
 
         """
-        return self._data.items()
+        return self.__data.items()
 
     @overload
     def get(self, key: K, /) -> V | None: ...
@@ -216,7 +218,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         2
 
         """
-        return self._data.get(key, default)
+        return self.__data.get(key, default)
 
     def copy(self, /) -> "frozendict[K, V]":
         """Return a shallow copy.
@@ -236,7 +238,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         # `PyFrozenDict_CheckExact` here, so a *subclass* must not return
         # `self`. `ImmutableMap` overrides `copy` precisely because of this.
         # pylint: disable-next=unidiomatic-typecheck
-        return self if type(self) is frozendict else frozendict(self._data)
+        return self if type(self) is frozendict else frozendict(self.__data)
 
     def __copy__(self) -> "frozendict[K, V]":
         """Support `copy.copy`.
@@ -272,7 +274,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         ({'a': 1},)
 
         """
-        return (dict(self._data),)
+        return (dict(self.__data),)
 
     def __reduce_ex__(self, protocol: SupportsIndex, /) -> tuple[Any, ...]:
         """Reduce for pickling and `copy`, exactly as the built-in does.
@@ -333,7 +335,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
             return NotImplemented
         # The built-in's C implementation hardcodes the result type, so a
         # subclass of `frozendict` gets a plain `frozendict` back. Match that.
-        return frozendict(self._data | dict(other))
+        return frozendict(self.__data | dict(other))
 
     def __ror__(self, other: Any, /) -> Any:
         """Merge into another mapping.
@@ -363,7 +365,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
             return NotImplemented
         # Let the dict drive the merge so that e.g. `OrderedDict | frozendict`
         # stays an OrderedDict.
-        return other | self._data
+        return other | self.__data
 
     # ===========================================
     # Other
@@ -393,9 +395,9 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
 
         """
         if isinstance(other, frozendict):
-            return self._data == other._data
+            return self.__data == other.__data
         if isinstance(other, Mapping):
-            return self._data == dict(other)
+            return self.__data == dict(other)
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -414,11 +416,11 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
 
         """
         try:
-            return hash(frozenset(self._data.items()))
+            return hash(frozenset(self.__data.items()))
         except TypeError:
             # Re-raise as the built-in does, naming the unhashable value
             # rather than the `(key, value)` tuple holding it.
-            for value in self._data.values():
+            for value in self.__data.values():
                 hash(value)
             raise  # pragma: no cover  # only if a value's hash is flaky
 
@@ -435,4 +437,4 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
 
         """
         name = type(self).__name__
-        return f"{name}({self._data!r})" if self._data else f"{name}()"
+        return f"{name}({self.__data!r})" if self.__data else f"{name}()"

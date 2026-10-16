@@ -356,6 +356,22 @@ class TestFrozenDict:
 
         assert Sub(a=1).seen == {"a": 1}
 
+    def test_subclass_data_attribute_is_its_own(self) -> None:
+        """A subclass attribute named `_data` does not touch the contents.
+
+        The built-in has no `_data`, so there it is just another attribute;
+        the backport must not keep its storage under a name a subclass can
+        reach by accident.
+        """
+
+        class Sub(frozendict[str, int]):
+            def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+                self._data = {"z": 0}
+
+        s = Sub(a=1)
+        assert dict(s) == {"a": 1}
+        assert s._data == {"z": 0}
+
     def test_hash_is_frozenset_of_items(self) -> None:
         """The hash is that of the items' frozenset, as for the built-in."""
         d = frozendict(a=1, b=2)
