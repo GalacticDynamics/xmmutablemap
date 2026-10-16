@@ -96,7 +96,9 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
         if cls is frozendict and args and not kwargs and type(args[0]) is frozendict:
             return cast("Self", args[0])
         self = super().__new__(cls)
-        self.__data = dict(*args, **kwargs)  # type: ignore[assignment]
+        # Not `self.__data = ...`: the built-in fills itself in C, so a
+        # subclass's `__setattr__` (e.g. a frozen dataclass's) never sees it.
+        object.__setattr__(self, "_frozendict__data", dict(*args, **kwargs))
         return self
 
     # ===========================================

@@ -372,6 +372,19 @@ class TestFrozenDict:
         assert dict(s) == {"a": 1}
         assert s._data == {"z": 0}
 
+    def test_construction_bypasses_subclass_setattr(self) -> None:
+        """A subclass `__setattr__` is not involved in building the contents.
+
+        The built-in fills itself in C, so e.g. a frozen dataclass subclass
+        constructs; the backport must not go through `__setattr__` either.
+        """
+
+        class NoSetattr(frozendict[str, int]):
+            def __setattr__(self, name: str, value: Any) -> None:
+                raise AttributeError(name)
+
+        assert dict(NoSetattr(a=1)) == {"a": 1}
+
     def test_hash_is_frozenset_of_items(self) -> None:
         """The hash is that of the items' frozenset, as for the built-in."""
         d = frozendict(a=1, b=2)
