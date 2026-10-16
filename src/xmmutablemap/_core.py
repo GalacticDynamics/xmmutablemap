@@ -175,12 +175,13 @@ class ImmutableMap(frozendict[K, V]):
         >>> import jax
         >>> from xmmutablemap import ImmutableMap
         >>> d = ImmutableMap(a=1, b=2)
-        >>> flat = d.tree_flatten()
-        >>> ImmutableMap.tree_unflatten(*flat)
-        ImmutableMap({1: 'a', 2: 'b'})
+        >>> children, keys = d.tree_flatten()
+        >>> ImmutableMap.tree_unflatten(keys, children)
+        ImmutableMap({'a': 1, 'b': 2})
 
-        >>> jax.tree.unflatten(jax.tree.structure(d), flat)
-        ImmutableMap({'a': (1, 2), 'b': ('a', 'b')})
+        >>> leaves, treedef = jax.tree.flatten(d)
+        >>> jax.tree.unflatten(treedef, leaves)
+        ImmutableMap({'a': 1, 'b': 2})
 
         """
         return cls(tuple(zip(aux_data, children, strict=True)))
