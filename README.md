@@ -120,6 +120,41 @@ while `frozendict | other` merges only a `dict` or `frozendict` (so, for
 example, a custom `Mapping` with no `|` of its own raises `TypeError`). Convert
 such mappings with `dict(...)` when switching to the built-in.
 
+#### Subclassing
+
+Being a `frozendict`, an `ImmutableMap` gets its contents in `__new__`, and they
+cannot change afterwards. A subclass that wants to transform its input overrides
+`__new__`; its `__init__`, if any, runs on an already-filled map. Subclasses are
+not PyTree nodes unless they register themselves:
+
+```python
+from jax.tree_util import register_pytree_node_class
+
+
+@register_pytree_node_class
+class UpperKeys(ImmutableMap):
+    def __new__(cls, *args, **kwargs):
+        data = dict(*args, **kwargs)
+        return super().__new__(cls, {k.upper(): v for k, v in data.items()})
+
+
+print(UpperKeys(a=1))
+# UpperKeys({'A': 1})
+print(jax.tree.leaves(UpperKeys(a=1, b=2)))
+# [1, 2]
+```
+
+> [!WARNING]
+>
+> **Don't subclass `ImmutableMap` with an `equinox.Module` or a dataclass.** The
+> contents are whatever `__new__` receives, as `dict(*args, **kwargs)`, and
+> nothing in `__init__` can change them. An `equinox.Module` drops its arguments
+> in `__new__`, so it is always an empty mapping; a dataclass gets its
+> constructor arguments as its contents, not its fields. Before 0.3.0 this
+> pattern worked by calling `ImmutableMap.__init__` and setting the private
+> `_data`; neither exists any more. Have such a class subclass
+> `collections.abc.Mapping` and keep its own `dict` instead.
+
 ### JAX Integration
 
 One of the key benefits of `ImmutableMap` is its compatibility with JAX. Since
