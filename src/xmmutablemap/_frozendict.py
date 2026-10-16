@@ -397,6 +397,7 @@ class frozendict(Mapping[K, V]):  # noqa: N801  # pylint: disable=invalid-name
 
         """
         if isinstance(other, frozendict):
+            # pylint: disable-next=protected-access  # same class
             return self.__data == other.__data
         if isinstance(other, Mapping):
             return self.__data == dict(other)
